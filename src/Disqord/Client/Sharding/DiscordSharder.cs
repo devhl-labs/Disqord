@@ -12,15 +12,19 @@ namespace Disqord.Sharding
 
         private readonly int _shardCount;
 
-        public DiscordSharder(TokenType tokenType, string token, DiscordSharderConfiguration configuration = null)
-            : this(new RestDiscordClient(tokenType, token, configuration ??= new DiscordSharderConfiguration()), configuration)
-        { }
+        public DiscordSharder(Func<CachedGuild[], Task<CachedGuild[]>> sortGuilds, TokenType tokenType, string token, DiscordSharderConfiguration configuration = null)
+            : this(sortGuilds, new RestDiscordClient(tokenType, token, configuration ??= new DiscordSharderConfiguration()), configuration)
+        { 
+            
+        }
 
-        public DiscordSharder(RestDiscordClient restClient, DiscordSharderConfiguration configuration = null)
+        public DiscordSharder(Func<CachedGuild[], Task<CachedGuild[]>> sortGuilds, RestDiscordClient restClient, DiscordSharderConfiguration configuration = null)
             : base(restClient, configuration ??= new DiscordSharderConfiguration())
         {
             if (!IsBot)
                 throw new ArgumentException("Only bots support sharding.", nameof(restClient));
+
+            SortGuilds = sortGuilds;
 
             Shards = ReadOnlyList<Shard>.Empty;
             _shardCount = configuration.ShardCount.GetValueOrDefault();

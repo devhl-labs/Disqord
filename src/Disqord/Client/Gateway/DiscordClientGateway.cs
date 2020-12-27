@@ -42,9 +42,11 @@ namespace Disqord
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         private readonly Queue<(PayloadModel, GatewayDispatch)> _readyPayloadQueue = new Queue<(PayloadModel, GatewayDispatch)>();
-
-        public DiscordClientGateway(DiscordClientState state, (int ShardId, int ShardCount)? shards)
+        private readonly Func<CachedGuild[], Task<CachedGuild[]>> _sortGuildsAsync;
+        public DiscordClientGateway(DiscordClientState state, (int ShardId, int ShardCount)? shards, Func<CachedGuild[], Task<CachedGuild[]>> sortGuildsAsync)
         {
+            _sortGuildsAsync = sortGuildsAsync;
+            
             State = state;
             _identifyLock = new IdentifyLock(this);
             _shard = shards != null
@@ -175,6 +177,12 @@ namespace Disqord
                 return;
             }
 
+            if (payload == null)
+            {
+                Log(LogSeverity.Critical, $"Payload was null.");
+                return;
+            }
+
             Log(LogSeverity.Debug, $"Received opcode {payload.Op}.");
             try
             {
@@ -292,6 +300,9 @@ namespace Disqord
                         .Select(x => x.Value)
                         .ToArray();
                     var tasks = new Task[guilds.Length];
+
+                    guilds = await _sortGuildsAsync(guilds);
+
                     for (var i = 0; i < guilds.Length; i++)
                     {
                         var guild = guilds[i];

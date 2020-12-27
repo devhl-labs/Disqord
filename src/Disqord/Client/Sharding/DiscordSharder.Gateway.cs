@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace Disqord.Sharding
 
         private DiscordClientGateway[] _gateways;
         private RestGatewayBotResponse _gatewayBotResponse;
+        public Func<CachedGuild[], Task<CachedGuild[]>> SortGuilds;
 
         public override async Task RunAsync(CancellationToken cancellationToken = default)
         {
@@ -38,7 +40,7 @@ namespace Disqord.Sharding
             var tasks = new Task[_gateways.Length];
             for (var i = 0; i < _gateways.Length; i++)
             {
-                var gateway = new DiscordClientGateway(State, (i, _gateways.Length));
+                var gateway = new DiscordClientGateway(State, (i, _gateways.Length), SortGuilds);
                 _gateways[i] = gateway;
                 shards[i] = new Shard(this, gateway);
                 tasks[i] = gateway.RunAsync(cancellationToken);
