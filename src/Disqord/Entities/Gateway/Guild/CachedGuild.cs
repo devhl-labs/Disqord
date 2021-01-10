@@ -168,7 +168,7 @@ namespace Disqord
             _members = new LockedDictionary<Snowflake, CachedMember>(model.MemberCount);
 
             Update(model);
-            if (client.IsBot /*&& IsLarge*/)
+            if (client.IsBot && IsLarge)
             {
                 ChunksExpected = (int) Math.Ceiling(model.MemberCount / 1000.0);
                 ChunkTcs = new TaskCompletionSource<bool>();
