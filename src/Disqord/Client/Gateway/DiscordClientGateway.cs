@@ -303,27 +303,31 @@ namespace Disqord
 
                     guilds = await _sortGuildsAsync(guilds);
 
-                    for (var i = 0; i < guilds.Length; i++)
+                    _ = Task.Run(async () =>
                     {
-                        var guild = guilds[i];
-                        Log(LogSeverity.Information, $"Requesting members for {guild.Name}. Expecting {guild.ChunksExpected} {(guild.ChunksExpected == 1 ? "chunk" : "chunks")}.");
-                        await SendRequestMembersAsync(guild.Id).ConfigureAwait(false);
-                        tasks[i] = guild.ChunkTcs.Task;
-
-                        if (i + 1 % 115 == 0)
+                        for (var i = 0; i < guilds.Length; i++)
                         {
-                            Log(LogSeverity.Information, "Delaying chunk requests for 1 minute.");
-                            await Task.Delay(60_000).ConfigureAwait(false);
-                        }
-                    }
+                            var guild = guilds[i];
+                            Log(LogSeverity.Information, $"Requesting members for {guild.Name}. Expecting {guild.ChunksExpected} {(guild.ChunksExpected == 1 ? "chunk" : "chunks")}.");
 
-                    var timeoutTask = Task.Delay(40_000 + guilds.Length / 115 * 60_000);
-                    var batchesTask = Task.WhenAll(tasks);
-                    var task = await Task.WhenAny(timeoutTask, batchesTask).ConfigureAwait(false);
-                    if (task == timeoutTask)
-                    {
-                        Log(LogSeverity.Critical, $"Timed out waiting for member chunks.");
-                    }
+                            await SendRequestMembersAsync(guild.Id).ConfigureAwait(false);
+                            tasks[i] = guild.ChunkTcs.Task;
+
+                            if ((i + 1) % 80 == 0)
+                            {
+                                Log(LogSeverity.Information, "Delaying chunk requests for 1 minute.");
+                                await Task.Delay(60_000).ConfigureAwait(false);
+                            }
+                        }
+
+                        var timeoutTask = Task.Delay(40_000 + guilds.Length / 80 * 60_000); // Task.Delay(120_000 * guilds.Length);
+                        var batchesTask = Task.WhenAll(tasks);
+                        var task = await Task.WhenAny(timeoutTask, batchesTask).ConfigureAwait(false);
+                        if (task == timeoutTask)
+                        {
+                            Log(LogSeverity.Critical, $"Timed out waiting for member chunks.");
+                        }
+                    });
                 }
             }
             else
