@@ -313,14 +313,14 @@ namespace Disqord
                             await SendRequestMembersAsync(guild.Id).ConfigureAwait(false);
                             tasks[i] = guild.ChunkTcs.Task;
 
-                            if ((i + 1) % 80 == 0)
+                            if ((i + 1) % 40 == 0)
                             {
                                 Log(LogSeverity.Information, "Delaying chunk requests for 1 minute.");
                                 await Task.Delay(60_000).ConfigureAwait(false);
                             }
                         }
 
-                        var timeoutTask = Task.Delay(40_000 + guilds.Length / 80 * 60_000); // Task.Delay(120_000 * guilds.Length);
+                        var timeoutTask = Task.Delay(40_000 + guilds.Length / 40 * 60_000); // Task.Delay(120_000 * guilds.Length);
                         var batchesTask = Task.WhenAll(tasks);
                         var task = await Task.WhenAny(timeoutTask, batchesTask).ConfigureAwait(false);
                         if (task == timeoutTask)
