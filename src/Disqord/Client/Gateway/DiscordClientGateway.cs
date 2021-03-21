@@ -65,10 +65,10 @@ namespace Disqord
 
         public async Task RunAsync(CancellationToken cancellationToken)
         {
+            await _semaphore.WaitAsync().ConfigureAwait(false);
+
             try
             {
-                await _semaphore.WaitAsync().ConfigureAwait(false);
-
                 if (_combinedRunCts != null)
                     throw new InvalidOperationException("The gateway is already running.");
 
@@ -145,10 +145,10 @@ namespace Disqord
 
         public async Task StopAsync()
         {
+            await _semaphore.WaitAsync(_combinedRunCts.Token).ConfigureAwait(false);
+
             try
             {
-                await _semaphore.WaitAsync(_combinedRunCts.Token).ConfigureAwait(false);
-
                 if (_combinedRunCts == null)
                     throw new InvalidOperationException("The gateway is not running.");
 
@@ -196,15 +196,16 @@ namespace Disqord
 
         private async Task WebSocketClosedAsync(WebSocketClosedEventArgs e)
         {
+            if (_manualDisconnection)
+                return;
+
+            if (_reconnecting)
+                return;
+
+            await _semaphore.WaitAsync().ConfigureAwait(false);
+
             try
             {
-                if (_manualDisconnection)
-                    return;
-
-                if (_reconnecting)
-                    return;
-
-                await _semaphore.WaitAsync().ConfigureAwait(false);
                 _reconnecting = true;
 
                 Log(LogSeverity.Warning, $"Close: {e.Status} {e.Description}", e.Exception);
