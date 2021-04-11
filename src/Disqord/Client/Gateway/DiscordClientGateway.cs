@@ -180,6 +180,10 @@ namespace Disqord
             if (payload == null)
             {
                 Log(LogSeverity.Critical, $"Payload was null.");
+
+                // hopefully it reconnects after this
+                payload = new PayloadModel { Op = GatewayOperationCode.InvalidSession };
+                await HandleOpcodeAsync(payload).ConfigureAwait(false);
                 return;
             }
 
