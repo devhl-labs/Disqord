@@ -56,7 +56,7 @@ namespace Disqord
                     }
                     else
                     {
-                        if (payload != null && payload.D.ToType<bool>())
+                        if (payload != null && payload.D != null && payload.D.ToType<bool>())
                         {
                             Log(LogSeverity.Information, "Session is resumable, resuming...");
                             await SendResumeAsync().ConfigureAwait(false);
