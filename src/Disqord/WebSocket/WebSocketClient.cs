@@ -86,6 +86,8 @@ namespace Disqord.WebSocket
 
                     if (task == delayTask)
                         throw new TaskCanceledException("Timed out waiting for ClientWebSocket's ConnectAsync.");
+
+                    await connectTask.ConfigureAwait(false);
                 }
             }
             else
